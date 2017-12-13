@@ -18,7 +18,8 @@
 
 缺点：此方法无法解决对象之间的相互循环引用问题。例如：
 
-    public class GCVinctorTest {
+
+ public class GCVinctorTest {
     
         private Object instance = null;
         
@@ -37,7 +38,8 @@
     }
 
 
-![image.png](http://upload-images.jianshu.io/upload_images/1583231-7231320273b6f0cf.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/800)
+
+![image.png](../../../images/java/normal/gc/1.png)
 
 
 * step1：实例A的引用计数加1，实例A的引用计数=1；
