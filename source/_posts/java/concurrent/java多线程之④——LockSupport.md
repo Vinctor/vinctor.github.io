@@ -1,3 +1,8 @@
+----
+title: java多线程之④——LockSupport
+date: 2017-12-04
+----
+
 >本文基于java version "1.8.0_77"
 
 LockSupport（java.util.concurrent.locks.LockSupport）是Java中底层类，提供了基本的线程同步原语。JUC中同步框架核心AQS（AbstractQueuedSynchronizer），就是通过使用LockSupport来实现线程的阻塞与唤醒的。我们先了解一下LockSupport类，为了解AQS做准备。

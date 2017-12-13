@@ -1,3 +1,8 @@
+----
+title: java多线程之①——Java内存模型（JMM）
+date: 2017-12-01
+----
+
 在讲解之前，先区别两个概念：java内存模型与JVM内存模型。
 * java内存模型：JMM（Java Memory Model），JMM的目的是为了解决Java多线程对共享数据的读写一致性问题，通过```Happens-Before```语义定义了Java程序对数据的访问规则，修正之前由于读写冲突导致的Cache数据不一致的问题。这是一种逻辑抽象，并没有对应内存实体。它规范了（本文将重点讲解）
 * JVM内存模型：是指JVM运行过程中数据区域，参见[链接](http://www.jianshu.com/p/860c259c8aad)，此为实实在在存在着的内存区域。
@@ -19,6 +24,7 @@ JMM决定了一个线程对共享便利那个的写入何时对另一个线程�
 ![image.png](http://upload-images.jianshu.io/upload_images/1583231-a12db0f4cdf0d0ba.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 ````
+
 public class Test{
   private  int i=1;
 
@@ -32,6 +38,7 @@ public class Test{
        return i；
   }
 }
+
 ````
 线程A修改变量并对线程B可见需要通过以下步骤：
 1 .（setVar） 线程A修改本地内存A中的变量副本（A），

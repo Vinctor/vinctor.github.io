@@ -1,4 +1,7 @@
->github上的地址：[DevelopBlog](https://github.com/Vinctor/DevelopBlog)
+
+---
+title: JVM内存模型
+---
 
 # 概览
 java虚拟机(以下简称JVM)多种多样,其中都必须遵循《java虚拟机规范》的要求,本篇文章只讨论```hotspot```（SE7）.

@@ -1,3 +1,8 @@
+----
+title: java多线程之③——volatile
+date: 2017-12-03
+----
+
 在多线程编程中，Synchronized 和 volatile 都扮演者重要的角色，前面的[文章](http://www.jianshu.com/p/81e6f64c0fec)我们已经了解了java内置锁Synchronized ，它保证了并发过程中的可见性与原子性，避免了共享数据的错误。
 而 Volatile可以看做是轻量级的 Synchronized，它只保证了共享变量的可见性。在线程 A 修改了被 volatile 修饰的共享变量之后，线程 B 能够读取到正确的值。在 [关于JMM 的文章](http://www.jianshu.com/p/5898b99c6534)中我们了解到 java 在多线程中操作共享变量的过程中，会存在指令重排序与共享变量工作内存缓存的问题。
 
