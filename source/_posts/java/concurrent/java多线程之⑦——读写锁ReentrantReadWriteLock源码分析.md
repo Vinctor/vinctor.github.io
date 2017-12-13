@@ -1,7 +1,10 @@
+title: java多线程之⑦——读写锁ReentrantReadWriteLock源码分析
+date: 2017-12-07
+---
 >本文基于java version "1.8.0_77"
 
-在没有```ReentrantReadWriteLock```的时候,我们对资源进行读写操作时,为了确保正确的 读写,一般会使用```Synchronized```操作,如下:
-````
+在没有`ReentrantReadWriteLock`的时候,我们对资源进行读写操作时,为了确保正确的 读写,一般会使用`Synchronized`操作,如下:
+```
   public synchronized void write(){
         //写操作
         notifyAll();
@@ -11,8 +14,8 @@
         //读操作  
         notifyAll();
     }
-````
-可以看到，读写操作都是互斥执行的。但这种写法存在一个问题，```读操作是可以并发进行的```，故这样互斥的写法存在计算机资源的浪费的问题。JUC中```ReentrantReadWriteLock```为了这一痛点应运而生了。
+```
+可以看到，读写操作都是互斥执行的。但这种写法存在一个问题，`读操作是可以并发进行的`，故这样互斥的写法存在计算机资源的浪费的问题。JUC中`ReentrantReadWriteLock`为了这一痛点应运而生了。
 基本的规则就是：
 * 读写互斥
 * 写写互斥
@@ -22,7 +25,7 @@ ReentrantReadWriteLock的特性：
 
 * 公平性选择：支持非公平(默认)和公平的锁获取方式，吞吐量非公平优于公平。在读锁的获取过程中，为了防止写线程饥饿等待，如果同步队列中的第一个节点是写线程，则阻塞当前读线程。
 * 重入：锁支持重进入。读线程在获取了读锁之后，能够再次获取读锁。而写线程在获取了写锁之后能够再次获取写锁。
-* 锁降级：遵循```获取写锁——获取读锁——释放写锁```的次序，写锁能够降级成为读锁
+* 锁降级：遵循`获取写锁——获取读锁——释放写锁`的次序，写锁能够降级成为读锁
 
 # 基本用法
 首先一个测试类：
@@ -41,13 +44,13 @@ ReentrantReadWriteLock的特性：
 我们在demo结果中可以看到，
 ![image.png](http://upload-images.jianshu.io/upload_images/1583231-51635b7ab75ab3ae.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-最开始的```Thread-0```和```Thread-1```读操作是可以并发执行的，
+最开始的`Thread-0`和`Thread-1`读操作是可以并发执行的，
 
 ![image.png](http://upload-images.jianshu.io/upload_images/1583231-6dd61344183290be.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 接下来的三个写操作是互斥执行的。
 
-下面我们从源码角度来分析一下```ReentrantReadWriteLock```。
+下面我们从源码角度来分析一下`ReentrantReadWriteLock`。
 
 # 源码分析
 
@@ -63,9 +66,9 @@ ReentrantReadWriteLock实现了读写锁的接口 ReadWriteLock：
 ![image.png](http://upload-images.jianshu.io/upload_images/1583231-d1363c254a3b48c8.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 ReentrantReadWriteLock有两个构造函数，初始化时对是否使用公平锁进行设定，默认是非公平锁，并实例化了sync类。而Sync类继承了AQS类。
-我们可以看到，ReentrantReadWriteLock为读写操作分别设置了一个锁```ReadLock```和```WriteLock```。两个锁的构造函数传入了当前ReentrantReadWriteLock类的实例，其实也只是用到了刚刚实例化了的sync。这两个锁也将是我们研究的重点。
+我们可以看到，ReentrantReadWriteLock为读写操作分别设置了一个锁`ReadLock`和`WriteLock`。两个锁的构造函数传入了当前ReentrantReadWriteLock类的实例，其实也只是用到了刚刚实例化了的sync。这两个锁也将是我们研究的重点。
 
-读写锁```ReadLock```和```WriteLock```两个内部类的结构很简单，和之前分析过的[ReentrantLock源码](http://www.jianshu.com/p/417c8d7becf9)一样，如下图：
+读写锁`ReadLock`和`WriteLock`两个内部类的结构很简单，和之前分析过的[ReentrantLock源码](http://www.jianshu.com/p/417c8d7becf9)一样，如下图：
 ![image.png](http://upload-images.jianshu.io/upload_images/1583231-621d1ed5c96dfe83.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 #### 状态标识
@@ -78,26 +81,26 @@ ReentrantReadWriteLock有两个构造函数，初始化时对是否使用公平�
 
 通过位运算进行计算，
 假设当前同步状态值state为S：
-假设S值为：```00000000000000110000000000000011```读写都位3
-写状态等于 ```S & 0x0000FFFF```（将高16位全部抹去）,对应方法```Sync::exclusiveCount(int)```
-````
+假设S值为：`00000000000000110000000000000011`读写都位3
+写状态等于 `S & 0x0000FFFF`（将高16位全部抹去）,对应方法`Sync::exclusiveCount(int)`
+```
 进行&运算
 00000000000000001111111111111111     EXCLUSIVE_MASK独占运算掩码
 00000000000000110000000000000011     state值运算掩码
 —————————————————————————————————    与运算
 00000000000000000000000000000011     得到写状态的值
-````
-获取当前的读状态：等于``` S >>> 16```（无符号补0右移16位）。抹掉后16位值，（无符号右移，不管是正数还是负数，左边补零）,对应方法```Sync::sharedCount(int)```
-````
+```
+获取当前的读状态：等于` S >>> 16`（无符号补0右移16位）。抹掉后16位值，（无符号右移，不管是正数还是负数，左边补零）,对应方法`Sync::sharedCount(int)`
+```
 进行无符号右移运算
 00000000000000110000000000000011     state值
 ————————————————————————————————     S >>> 16
 00000000000000000000000000000011     得到读状态的值
-````
-当写状态增加1时，由于写16位在低位，直接应该等于```S + 1```；
+```
+当写状态增加1时，由于写16位在低位，直接应该等于`S + 1`；
 
-当读状态增加1时，应该先将1增至高16位```(1 << 16)```，然后再相加。等于```S + (1 << 16)```，也就是```S + 0x00010000```
-````
+当读状态增加1时，应该先将1增至高16位`(1 << 16)`，然后再相加。等于`S + (1 << 16)`，也就是`S + 0x00010000`
+```
 1<<16:
 00000000000000000000000000000001
 ————————————————————————————————     进行左移16位
@@ -108,19 +111,19 @@ ReentrantReadWriteLock有两个构造函数，初始化时对是否使用公平�
 00000000000000110000000000000011     原state值
 ————————————————————————————————     相加
 00000000000001000000000000000011     计算结果
-````
+```
 
 ## 写锁WriteLock
 首先是构造函数：
-````
+```
         protected WriteLock(ReentrantReadWriteLock lock) {
             sync = lock.sync;
         }
-````
-获取到外部类ReentrantReadWriteLock的变量```sync```，进而进行下面的加锁解锁操作。读锁也是同样的操作，可以了解到，其实读锁与写锁中都持有同一个Sync，这样才能达到读写互斥的目的。
+```
+获取到外部类ReentrantReadWriteLock的变量`sync`，进而进行下面的加锁解锁操作。读锁也是同样的操作，可以了解到，其实读锁与写锁中都持有同一个Sync，这样才能达到读写互斥的目的。
 
 再继续看一下加锁操作：
-````
+```
         public void lock() {
             sync.acquire(1);
         }
@@ -134,17 +137,17 @@ ReentrantReadWriteLock有两个构造函数，初始化时对是否使用公平�
                 throws InterruptedException {
             return sync.tryAcquireNanos(1, unit.toNanos(timeout));
         }
-````
+```
 有没有很熟悉？这跟我们上篇讲到的[ReentrantLock](http://www.jianshu.com/p/417c8d7becf9)一个套路：
->调用AQS的```acquire```系列方法，然后AQS调用Sync实现的```tryAcquire```系列方法来来确定当前线程能否获取同步状态，如果可以获取，则执行同步代码；如果不允许获取，则进入由AQS管理的等待同步队列进行自旋等待（[AbstractQueuedSynchronizer(AQS)源码分析](http://www.jianshu.com/p/4a6d4ed88b1d)）。
+>调用AQS的`acquire`系列方法，然后AQS调用Sync实现的`tryAcquire`系列方法来来确定当前线程能否获取同步状态，如果可以获取，则执行同步代码；如果不允许获取，则进入由AQS管理的等待同步队列进行自旋等待（[AbstractQueuedSynchronizer(AQS)源码分析](http://www.jianshu.com/p/4a6d4ed88b1d)）。
 
-注意此处调用的是```独占式的获取锁```，这是因为写操作与写操作，写操作与读操作都是互斥的。
+注意此处调用的是`独占式的获取锁`，这是因为写操作与写操作，写操作与读操作都是互斥的。
 
 
 
 执行流程1：WriteLock:lock()->Sync:tryAcquire(int acquires)
 
-````
+```
         protected final boolean tryAcquire(int acquires) {
             Thread current = Thread.currentThread();
             int c = getState();
@@ -167,11 +170,11 @@ ReentrantReadWriteLock有两个构造函数，初始化时对是否使用公平�
             setExclusiveOwnerThread(current);
             return true;
         }
-````
+```
 
-writerShouldBlock()方法是由子类```NonfairSync```和```FairSync```类实现，这里体现在公平与否，与ReentrantLock类似
+writerShouldBlock()方法是由子类`NonfairSync`和`FairSync`类实现，这里体现在公平与否，与ReentrantLock类似
 在公平锁中，
-````
+```
 final boolean writerShouldBlock() {
     return hasQueuedPredecessors();
 }
@@ -182,22 +185,22 @@ final boolean writerShouldBlock() {
         return h != t &&
             ((s = h.next) == null || s.thread != Thread.currentThread());
 }
-````
+```
 进行了hasQueuedPredecessors()判断，判断等待队列中是否还有比当前线程更早的, 如果为空，或者当前线程线程是等待队列的第一个时才占有锁。
 
 在非公平锁中，
-````
+```
 final boolean writerShouldBlock() {
     return false; // writers can always barge
 }
-````
+```
 直接返回了false，故非公平的情况下，写锁可以不必按照时序进行获取。
 
 
 >可以看到在写锁获取的过程中，不仅要考虑重入的情况，还存在读写是否存在的情况，也就是读与写不能同时获取锁。只有等待其他线程都释放了读锁，写锁才能尝试获取。写锁一旦获取到，后续的读写锁都将阻塞进入等待队列。
 
 写锁的释放：
-````
+```
         public void unlock() {
             sync.release(1);
         }
@@ -212,11 +215,11 @@ final boolean writerShouldBlock() {
             setState(nextc);
             return free;
         }
-````
+```
 与ReentrantLock相对比，很相似，只是简单的将state的低16位-1。当写状态为0的时候，表示写锁被完全释放。
 
 ## 读锁ReadLock
-````
+```
         public void lock() {
             sync.acquireShared(1);
         }
@@ -230,11 +233,11 @@ final boolean writerShouldBlock() {
                 throws InterruptedException {
             return sync.tryAcquireSharedNanos(1, unit.toNanos(timeout));
         }
-````
+```
 
 读锁的获取是共享式获取的，这时因为，读锁允许被多个线程同时获取，多个线程可以并发的进行读操作。
 我们来看一下还是相同的套路：
-````
+```
         public void lock() {
             sync.acquireShared(1);
         }
@@ -276,20 +279,20 @@ final boolean writerShouldBlock() {
             //如果上述的CAS更改state值失败，则执行fullTryAcquireShared，自旋重试获取，下面将分析
             return fullTryAcquireShared(current);
         }
-````
+```
 接下来看一下其中的几个重点方法：
 
 #### readerShouldBlock()
 和writerShouldBlock一样，在公平、非公平中有不同的实现：
 公平锁中：
-````
+```
         final boolean readerShouldBlock() {
             return hasQueuedPredecessors();
         }
-`````
+````
 判断是否有前置节点，不解释了
 看一下非公平锁中，
-````
+```
     final boolean readerShouldBlock() {
           return apparentlyFirstQueuedIsExclusive();
     }
@@ -301,12 +304,12 @@ final boolean writerShouldBlock() {
             s.thread != null;
     }
 
-````
-可以看到最终执行了AQS的```apparentlyFirstQueuedIsExclusive```方法， 如果为了防止写线程饥饿等待，如果同步队列中的第一个线程是以独占模式获取锁（写锁），那么当前获取读锁的线程需要阻塞，让队列中的第一个线程先执行。
+```
+可以看到最终执行了AQS的`apparentlyFirstQueuedIsExclusive`方法， 如果为了防止写线程饥饿等待，如果同步队列中的第一个线程是以独占模式获取锁（写锁），那么当前获取读锁的线程需要阻塞，让队列中的第一个线程先执行。
 
 #### firstReader  HoldCounter 等
 先看上面的代码，我截取下来：
-````
+```
              int r = sharedCount(c);
               if (!readerShouldBlock() &&
                 r < MAX_COUNT &&
@@ -325,10 +328,10 @@ final boolean writerShouldBlock() {
                     rh.count++;
                 }
                 return 1;
-````
+```
 前面提到了，读锁是共享式获取锁的，多个读线程可以并发进行读取数据，获取一个读锁+1，释放一个读锁-1.其中HoldCounter 是用来记录线程获取读锁（重入）的次数。HoldCounter 类代码如下：
 
-````
+```
         /**
          * A counter for per-thread read hold counts.
          * Maintained as a ThreadLocal; cached in cachedHoldCounter
@@ -338,22 +341,22 @@ final boolean writerShouldBlock() {
             // Use id, not reference, to avoid garbage retention
             final long tid = getThreadId(Thread.currentThread());
         }
-````
+```
 
 很简单：1个用来记录重入次数的int变量与一个记录线程ID的long变量。
 在CAS设置State值设置成功之后，
-* 我们看到如果是首个线程获取锁```r == 0  ```，则表示当前线程是首个获取锁的线程，则不必存储到HoldCounter ，直接用两个变量记录一下即可（firstReader 与 firstReaderHoldCount ）；
-* 如果不是已经有线程获取到了锁，且```firstReader == current```,表示已经获取锁的线程是当前线程，则该次获取锁为第一个读锁线程重入  ，直接```firstReaderHoldCount```即可；
-* 如果当前线程不是首次获取锁的线程，且也不是重入，即当前线程非第一个读锁线程，那么就需要使用一种数据结构来存储标记```哪个线程获取了几次锁```。这个时候```ThreadLocal```就派上了用场。看这种情况下的代码：
-````
+* 我们看到如果是首个线程获取锁`r == 0  `，则表示当前线程是首个获取锁的线程，则不必存储到HoldCounter ，直接用两个变量记录一下即可（firstReader 与 firstReaderHoldCount ）；
+* 如果不是已经有线程获取到了锁，且`firstReader == current`,表示已经获取锁的线程是当前线程，则该次获取锁为第一个读锁线程重入  ，直接`firstReaderHoldCount`即可；
+* 如果当前线程不是首次获取锁的线程，且也不是重入，即当前线程非第一个读锁线程，那么就需要使用一种数据结构来存储标记`哪个线程获取了几次锁`。这个时候`ThreadLocal`就派上了用场。看这种情况下的代码：
+```
                   HoldCounter rh = cachedHoldCounter;
                     if (rh == null || rh.tid != getThreadId(current))
                         cachedHoldCounter = rh = readHolds.get();
                     else if (rh.count == 0)
                         readHolds.set(rh);
                     rh.count++;            
-````
-````
+```
+```
           private transient ThreadLocalHoldCounter readHolds;
 
           static final class ThreadLocalHoldCounter
@@ -362,22 +365,22 @@ final boolean writerShouldBlock() {
                         return new HoldCounter();
                   }
           }
-````
-里面有一个readHolds全局变量，这个是ThreadLocalHoldCounter 类，ThreadLocalHoldCounter 类继承自ThreadLocal。由此可以看到前面讲过的```哪个线程获取了几次锁```是由```ThreadLocal```保存的。```ThreadLocal```将ThreadLocalHoldCounter 对象绑定到特定的线程上。ThreadLocalHoldCounter 在Sync无参构造函数中进行初始化的。
+```
+里面有一个readHolds全局变量，这个是ThreadLocalHoldCounter 类，ThreadLocalHoldCounter 类继承自ThreadLocal。由此可以看到前面讲过的`哪个线程获取了几次锁`是由`ThreadLocal`保存的。`ThreadLocal`将ThreadLocalHoldCounter 对象绑定到特定的线程上。ThreadLocalHoldCounter 在Sync无参构造函数中进行初始化的。
 
-了解了```ThreadLocalHoldCounter ```，我们看一下上面的流程，首先拿到已经缓存过的cachedHoldCounter，这个cachedHoldCounter是上次读锁获取过程中使用赋值的，然后判断cachedHoldCounter的线程id是否是当前线程的id或者cachedHoldCounter为空，
-* 如果不是，则```cachedHoldCounter = rh = readHolds.get()```，将当前线程对应的HoldCounter从ThreadLocal中取出来；
+了解了`ThreadLocalHoldCounter `，我们看一下上面的流程，首先拿到已经缓存过的cachedHoldCounter，这个cachedHoldCounter是上次读锁获取过程中使用赋值的，然后判断cachedHoldCounter的线程id是否是当前线程的id或者cachedHoldCounter为空，
+* 如果不是，则`cachedHoldCounter = rh = readHolds.get()`，将当前线程对应的HoldCounter从ThreadLocal中取出来；
 * 如果cachedHoldCounter 不是空且cachedHoldCounter 的线程ID为当前线程ID，且HoldCounter的读锁获取此时为0，则加入到readHolds中  。
 
-总的来说，上述就是为了获取到当前线程对应的HoldCounter。此后再进行```rh.count++```。
+总的来说，上述就是为了获取到当前线程对应的HoldCounter。此后再进行`rh.count++`。
 
 #### 读锁的释放
-````
+```
         public void unlock() {
             sync.releaseShared(1);
         }
-````
-````
+```
+```
         protected final boolean tryReleaseShared(int unused) {
             Thread current = Thread.currentThread();
             if (firstReader == current) {
@@ -411,7 +414,7 @@ final boolean writerShouldBlock() {
                     return nextc == 0;
             }
         }
-````
+```
 释放过程中做了3件事，
 * 若为第一次读锁线程，设置firstReader 与firstReaderHoldCount ；
 * 若不为第一次读锁线程，则获取HoldCounter 并修改计数；
@@ -426,8 +429,6 @@ final boolean writerShouldBlock() {
 独占式获取锁，获取过程与ReentrantLock类似，当前没有读写操作才会获取锁，
 #### 读锁
 共享式获取锁，如果存在非当前线程获取了写锁，则进入等待队列；否则，获取锁，并使用了ThreadLocalHoldCounter（ThreadLocal）存储当前线程与HoldCounter的关系。
-
-
 
 
 
