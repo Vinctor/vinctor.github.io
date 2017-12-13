@@ -63,7 +63,7 @@
 可达性分析算法 通过一系列的被称为```GC Roots```的对象爱你个作为起始点（相当于根），其他对象（相当于树枝或树叶）直接或间接都与这个```GC Roots```相连。如果一个对象与root不相连，则就说明这个对象是不可用的，GC就可以将它回收。如图所示
 
 
-![image.png](http://upload-images.jianshu.io/upload_images/1583231-b256deacbf6b8a76.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/800)
+![image.png](../../../images/java/normal/gc/2.png)
 
 图中obj1,obj2,obj3都与roots有直接或间接关联，不可被回收的存活对象，obj6，obj4，obj5虽然这三者之间有关联，但是与roots已经断开，故而可被回收对象。
 
@@ -82,7 +82,7 @@
 
 
 
-![image.png](http://upload-images.jianshu.io/upload_images/1583231-259584b7fad9f6c9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/800)
+![image.png](../../../images/java/normal/gc/3.png)
 
 
 从从上图看出，存在3个GC Root：
@@ -115,13 +115,13 @@ Jni变量```RefV3```指向堆中实例3，实例3指向了实例4；
 
 清除前
 
-![](http://upload-images.jianshu.io/upload_images/1583231-2ca5d672994ed679.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/800)
+![image.png](../../../images/java/normal/gc/4.png)
 
 清除后
 
-![](http://upload-images.jianshu.io/upload_images/1583231-85a460bb1beafa2f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/800)
+![image.png](../../../images/java/normal/gc/5.png)
 
-![](http://upload-images.jianshu.io/upload_images/1583231-befa7019e6f03700.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/200)
+![image.png](../../../images/java/normal/gc/6.png)
 
 
 可以看到，垃圾回收之后，剩余的存货对象分布比较杂乱，产生大量的碎片。碎片如果太多，将会导致，内存空间的不连续性，如果这时出现一个大对象（如数组），将会无法为其分配空间。
@@ -130,7 +130,7 @@ Jni变量```RefV3```指向堆中实例3，实例3指向了实例4；
 
 为了解决```标记—清除算法```的弊端，出现了```复制算法```。该算法首先将内存空间分为两部分，一次只使用其中的一块。当GC发生之时，对象被清理之后，将剩余的存活对象复制到另一部分内存空间上，再把当前的内存空间清空，这样就解决了碎片过多的问题。如图所示：
 
-![](http://upload-images.jianshu.io/upload_images/1583231-959442b70ec908aa.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/800)
+![image.png](../../../images/java/normal/gc/7.png)
 
 此方法虽然解决了碎片过多的问题，但是另一个显著问题又出现了：内存利用率太低！
 
@@ -141,7 +141,7 @@ Jni变量```RefV3```指向堆中实例3，实例3指向了实例4；
 为了解决复制算法的利用率低的问题，提出了```标记—整理算法```算法，与```标记—清除算法```一样，首先对对象进行标记，但后续步骤则不是对可回收对象进行清理，而是让存活的对象向内存空间的一端就行移动，然后清理掉端边界以外的内存。
 
 
-![](http://upload-images.jianshu.io/upload_images/1583231-d0ffbbc9a1ddfe2e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](../../../images/java/normal/gc/8.png)
 
 ## 分代收集
 
