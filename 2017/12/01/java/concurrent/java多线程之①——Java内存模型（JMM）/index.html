@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="多线程,并发,JMM,java内存模型," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="在讲解之前，先区别两个概念：java内存模型与JVM内存模型。  java内存模型：JMM（Java Memory Model），JMM的目的是为了解决Java多线程对共享数据的读写一致性问题，通过Happens-Before语义定义了Java程序对数据的访问规则，修正之前由于读写冲突导致的Cache数据不一致的问题。这是一种逻辑抽象，并没有对应内存实体。它规范了（本文将重点讲解） JVM内存模型">
+<meta name="keywords" content="多线程,并发,JMM,java内存模型">
+<meta property="og:type" content="article">
+<meta property="og:title" content="java多线程之①——Java内存模型（JMM）">
+<meta property="og:url" content="http://vinctor.cc/2017/12/01/java/concurrent/java多线程之①——Java内存模型（JMM）/index.html">
+<meta property="og:site_name" content="Vinctor&#39;s Home">
+<meta property="og:description" content="在讲解之前，先区别两个概念：java内存模型与JVM内存模型。  java内存模型：JMM（Java Memory Model），JMM的目的是为了解决Java多线程对共享数据的读写一致性问题，通过Happens-Before语义定义了Java程序对数据的访问规则，修正之前由于读写冲突导致的Cache数据不一致的问题。这是一种逻辑抽象，并没有对应内存实体。它规范了（本文将重点讲解） JVM内存模型">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/1583231-a12db0f4cdf0d0ba.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/1583231-621bf3227da253d8.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/800">
+<meta property="og:updated_time" content="2017-12-14T07:21:20.941Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="java多线程之①——Java内存模型（JMM）">
+<meta name="twitter:description" content="在讲解之前，先区别两个概念：java内存模型与JVM内存模型。  java内存模型：JMM（Java Memory Model），JMM的目的是为了解决Java多线程对共享数据的读写一致性问题，通过Happens-Before语义定义了Java程序对数据的访问规则，修正之前由于读写冲突导致的Cache数据不一致的问题。这是一种逻辑抽象，并没有对应内存实体。它规范了（本文将重点讲解） JVM内存模型">
+<meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/1583231-a12db0f4cdf0d0ba.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://vinctor.cc/2017/12/01/java/concurrent/java多线程之①——Java内存模型（JMM）/"/>
+
+
+
+
+
+  <title>java多线程之①——Java内存模型（JMM） | Vinctor's Home</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Vinctor's Home</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">天道酬勤</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            目录
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-question-circle"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://vinctor.cc/2017/12/01/java/concurrent/java多线程之①——Java内存模型（JMM）/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Vinctor（猿，国家十级保护动物）">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Vinctor's Home">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">java多线程之①——Java内存模型（JMM）</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-12-01T00:00:00+08:00">
+                2017-12-01
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/java多线程/" itemprop="url" rel="index">
+                    <span itemprop="name">java多线程</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>在讲解之前，先区别两个概念：java内存模型与JVM内存模型。</p>
+<ul>
+<li>java内存模型：JMM（Java Memory Model），JMM的目的是为了解决Java多线程对共享数据的读写一致性问题，通过<code>Happens-Before</code>语义定义了Java程序对数据的访问规则，修正之前由于读写冲突导致的Cache数据不一致的问题。这是一种逻辑抽象，并没有对应内存实体。它规范了（本文将重点讲解）</li>
+<li>JVM内存模型：是指JVM运行过程中数据区域，参见<a href="http://www.jianshu.com/p/860c259c8aad" target="_blank" rel="noopener">链接</a>，此为实实在在存在着的内存区域。</li>
+</ul>
+<p>上面已讲，JMM只是逻辑抽象，没有与其对应的内存运行区域，故不要将两者混着学，否则，你会疯。</p>
+<h1 id="Java并发编程遇到的问题"><a href="#Java并发编程遇到的问题" class="headerlink" title="Java并发编程遇到的问题"></a>Java并发编程遇到的问题</h1><p>我们在多线程编程中解决的两个最常见的问题：</p>
+<ul>
+<li>多线程之间如何操作同一变量；</li>
+<li>多线程中如何处理同步问题。</li>
+</ul>
+<p>java是跨平台语言，不同处理器架中都有自己高速缓存，并处理与主内存的通信协调。不同的处理器架构也都提供了自己的缓存一致性。java为了实现跨平台的语言特性，在<code>[JSR-133]</code>中提出了JMM规范，用于解决上述复杂的多平台问题。<br>JMM决定了一个线程对共享便利那个的写入何时对另一个线程可见。JMM定义了一个抽象关系：</p>
+<blockquote>
+<p>线程之间的<code>共享变量</code>存储在<code>主内存</code>中，每个线程都有一个私有的<code>工作内存</code>，<code>工作内存</code>中存储了共享变量的副本（类似于CPU中高速缓存与内存的关系，其实<code>工作内存</code>包含了高速缓存的概念）。<code>工作内存</code>是一个抽象概念，并不存在于真实内存中。</p>
+</blockquote>
+<p>如图所示：</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/1583231-a12db0f4cdf0d0ba.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">public class Test&#123;</span><br><span class="line">  private  int i=1;</span><br><span class="line"></span><br><span class="line">  //线程A修改</span><br><span class="line">  public void setVar()&#123;</span><br><span class="line">        i=2;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line"> //线程B获取</span><br><span class="line">  public int getVar()&#123;</span><br><span class="line">       return i；</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>线程A修改变量并对线程B可见需要通过以下步骤：<br>1 .（setVar） 线程A修改本地内存A中的变量副本（A），<br>并刷新到主内存中（B）；<br>2 . （getVar）线程B从主内存拿取变量值，更新本地内存B中的值</p>
+<h3 id="可见性与原子性"><a href="#可见性与原子性" class="headerlink" title="可见性与原子性"></a>可见性与原子性</h3><p>上述两个步骤，如果线程A对变量的修改能够正确的显示在线程B中，（即：一个线程修改的状态对另一个线程是可见的），称为<code>可见性</code>。<br>如果要保证上述代码能够正确运行，则需要保证步骤1的操作不可被拆分，需要按照：<code>线程A（A-&gt;B）-&gt;线程B</code>的顺序执行，如果出现了<code>线程A（A）-&gt;线程B-&gt;线程A（B）</code>这样的顺序执行，则会出现获取数据错误的问题。我们需要保证<code>setVar</code>是原子操作，这称为<code>原子性</code>。</p>
+<h1 id="指令重排序"><a href="#指令重排序" class="headerlink" title="指令重排序"></a>指令重排序</h1><p>无论是处理器还是JVM，唯一的宗旨就是在保证处理结果正确的前提下，尽最大可能的提高程序运行效率。为了提高运行效率，编译器，处理器执行期间，处理器高速缓存在回写主内存时都对运算指令进行了优化重排序。如下代码(摘自java并发编程艺术)：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">class ReorderExample &#123;</span><br><span class="line"></span><br><span class="line">  int a = 0;</span><br><span class="line">  boolean flag = false;</span><br><span class="line"></span><br><span class="line">  //线程A</span><br><span class="line">  public void writer() &#123;</span><br><span class="line">    a = 1;                         // 1</span><br><span class="line">    flag = true;                 // 2</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  //线程B</span><br><span class="line">  public void reader() &#123;</span><br><span class="line">    if (flag) &#123;                  // 3</span><br><span class="line">        int i = a * a;           // 4</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>flag变量是个标记，用来标识变量a是否已被写入。这里假设有两个线程A和B，A首先执行writer()方法，随后B线程接着执行reader()方法。线程B在执行操作4时，线程A拿到的a的值不一定是最新的。看下图：<br><img src="http://upload-images.jianshu.io/upload_images/1583231-621bf3227da253d8.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/800" alt="image.png"><br>程序在运行过成中，操作1和操作2可能会做了指令重排序，1和2颠倒执行，这在单线程中没有任何问题，但是在多线程中就会出现错误。</p>
+<h1 id="happens-before语义"><a href="#happens-before语义" class="headerlink" title="happens-before语义"></a>happens-before语义</h1><p>Java内存模型使用了各种操作来定义的，包括对变量的读写，监视器的获取释放等，JMM中使用了<code>happens-before</code>语义阐述了操作之间的内存可见性。如果想要保证执行操作B的线程看到操作A的结构（无论AB是否在同一线程），那么A，B必须满足<code>happens-before</code>关系。如果两个操作之间缺乏<code>happens-before</code>关系，那么JVM可以对他们进行任意的重排序。</p>
+<h3 id="happens-before规则包括："><a href="#happens-before规则包括：" class="headerlink" title="happens-before规则包括："></a>happens-before规则包括：</h3><ul>
+<li>程序顺序规则。一个线程中，如果操作A在B之前，那么线程中A操作将在B操作之前执行。</li>
+<li>监视器锁规则。在监视器锁上的解锁操作必须在同一个监视器锁上的佳作之前执行。</li>
+<li>volatile规则。对volatile变量的写入操作必须在对改变的读操作之前进行。</li>
+<li>线程启动规则。在线程上对Thread.start()的调用必须在对线程执行任何操作之前执行。</li>
+<li>线程结束规则。线程中的任何操作都必须在其他线程检测到该线程已经结束之前执行。</li>
+<li>终结器规则。对象的构造函数必须在启动该对象的终结器之前执行完成。</li>
+<li>传递性。如果操作A在B之前执行，并且操作B在C之前执行，那么操作A在C之前执行。</li>
+</ul>
+<p>我们在写代码过程中，当一个变量被多个线程读取并且被至少一个线程写入的时候，如果在读操作与写操作之前没有实现<code>happens-before</code>排序，则就会产生数据竞争问题，产生错误的结果。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/donate/wechat.jpg" alt="Vinctor（猿，国家十级保护动物） 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/donate/alipay.jpg" alt="Vinctor（猿，国家十级保护动物） 支付宝"/>
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/多线程/" rel="tag"># 多线程</a>
+          
+            <a href="/tags/并发/" rel="tag"># 并发</a>
+          
+            <a href="/tags/JMM/" rel="tag"># JMM</a>
+          
+            <a href="/tags/java内存模型/" rel="tag"># java内存模型</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/10/26/android/AS3.0中的Java8新特性/" rel="next" title="AS3.0中的Java8新特性">
+                <i class="fa fa-chevron-left"></i> AS3.0中的Java8新特性
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/12/02/java/concurrent/java多线程之②——Synchronized/" rel="prev" title="java多线程之②——Synchronized">
+                java多线程之②——Synchronized <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+<span class="jiathis_txt">分享到：</span>
+<a class="jiathis_button_fav">收藏夹</a>
+<a class="jiathis_button_copy">复制网址</a>
+<a class="jiathis_button_email">邮件</a>
+<a class="jiathis_button_weixin">微信</a>
+<a class="jiathis_button_qzone">QQ空间</a>
+<a class="jiathis_button_tqq">腾讯微博</a>
+<a class="jiathis_button_douban">豆瓣</a>
+<a class="jiathis_button_share">一键分享</a>
+
+<a href="http://www.jiathis.com/share?uid=2140465" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank">更多</a>
+<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+var jiathis_config={
+  data_track_clickback:true,
+  summary:"",
+  shortUrl:false,
+  hideMore:false
+}
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=2151738" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.jpg"
+                alt="Vinctor（猿，国家十级保护动物）" />
+            
+              <p class="site-author-name" itemprop="name">Vinctor（猿，国家十级保护动物）</p>
+              <p class="site-description motion-element" itemprop="description">Android Java 日常随笔</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">12</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">22</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/vinctor" target="_blank" title="GitHub">
+                    
+                      <i class="fa fa-fw fa-globe"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:xcht1209@gmail.com" target="_blank" title="E-Mail">
+                    
+                      <i class="fa fa-fw fa-globe"></i>E-Mail</a>
+                </span>
+              
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Java并发编程遇到的问题"><span class="nav-number">1.</span> <span class="nav-text"><a href="#Java&#x5E76;&#x53D1;&#x7F16;&#x7A0B;&#x9047;&#x5230;&#x7684;&#x95EE;&#x9898;" class="headerlink" title="Java&#x5E76;&#x53D1;&#x7F16;&#x7A0B;&#x9047;&#x5230;&#x7684;&#x95EE;&#x9898;"></a>Java&#x5E76;&#x53D1;&#x7F16;&#x7A0B;&#x9047;&#x5230;&#x7684;&#x95EE;&#x9898;</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#可见性与原子性"><span class="nav-number">1.0.1.</span> <span class="nav-text"><a href="#&#x53EF;&#x89C1;&#x6027;&#x4E0E;&#x539F;&#x5B50;&#x6027;" class="headerlink" title="&#x53EF;&#x89C1;&#x6027;&#x4E0E;&#x539F;&#x5B50;&#x6027;"></a>&#x53EF;&#x89C1;&#x6027;&#x4E0E;&#x539F;&#x5B50;&#x6027;</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#指令重排序"><span class="nav-number">2.</span> <span class="nav-text"><a href="#&#x6307;&#x4EE4;&#x91CD;&#x6392;&#x5E8F;" class="headerlink" title="&#x6307;&#x4EE4;&#x91CD;&#x6392;&#x5E8F;"></a>&#x6307;&#x4EE4;&#x91CD;&#x6392;&#x5E8F;</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#happens-before语义"><span class="nav-number">3.</span> <span class="nav-text"><a href="#happens-before&#x8BED;&#x4E49;" class="headerlink" title="happens-before&#x8BED;&#x4E49;"></a>happens-before&#x8BED;&#x4E49;</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#happens-before规则包括："><span class="nav-number">3.0.1.</span> <span class="nav-text"><a href="#happens-before&#x89C4;&#x5219;&#x5305;&#x62EC;&#xFF1A;" class="headerlink" title="happens-before&#x89C4;&#x5219;&#x5305;&#x62EC;&#xFF1A;"></a>happens-before&#x89C4;&#x5219;&#x5305;&#x62EC;&#xFF1A;</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vinctor（猿，国家十级保护动物）</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.3</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

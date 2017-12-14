@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="类加载," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="基于JVM的语言，如java,kotlin,groovy等语言，在各自编译器编译完成之后，都会编译为.class文件，用JVM加载。而class文件只有被确的加载到JVM正中才能运行和使用。虚拟机是如何在家这些文件呢？本文将详细讲解。 类的生命周期一个类从被加载到虚拟机到最后被卸载，生命周期包括：加载，验证，准备，解析，初始化，使用，卸载7个阶段。其中验证，准备，解析3个部分称为`连接阶段。  这">
+<meta name="keywords" content="类加载">
+<meta property="og:type" content="article">
+<meta property="og:title" content="java类加载机制">
+<meta property="og:url" content="http://vinctor.cc/2017/07/13/java/normal/java类加载机制/index.html">
+<meta property="og:site_name" content="Vinctor&#39;s Home">
+<meta property="og:description" content="基于JVM的语言，如java,kotlin,groovy等语言，在各自编译器编译完成之后，都会编译为.class文件，用JVM加载。而class文件只有被确的加载到JVM正中才能运行和使用。虚拟机是如何在家这些文件呢？本文将详细讲解。 类的生命周期一个类从被加载到虚拟机到最后被卸载，生命周期包括：加载，验证，准备，解析，初始化，使用，卸载7个阶段。其中验证，准备，解析3个部分称为`连接阶段。  这">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/1583231-143bb3a388527936.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/1583231-731c7ee40cbd2392.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/800">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/1583231-803d7042c8dc56f9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/800">
+<meta property="og:updated_time" content="2017-12-14T07:22:32.930Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="java类加载机制">
+<meta name="twitter:description" content="基于JVM的语言，如java,kotlin,groovy等语言，在各自编译器编译完成之后，都会编译为.class文件，用JVM加载。而class文件只有被确的加载到JVM正中才能运行和使用。虚拟机是如何在家这些文件呢？本文将详细讲解。 类的生命周期一个类从被加载到虚拟机到最后被卸载，生命周期包括：加载，验证，准备，解析，初始化，使用，卸载7个阶段。其中验证，准备，解析3个部分称为`连接阶段。  这">
+<meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/1583231-143bb3a388527936.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://vinctor.cc/2017/07/13/java/normal/java类加载机制/"/>
+
+
+
+
+
+  <title>java类加载机制 | Vinctor's Home</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Vinctor's Home</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">天道酬勤</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            目录
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-question-circle"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://vinctor.cc/2017/07/13/java/normal/java类加载机制/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Vinctor（猿，国家十级保护动物）">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Vinctor's Home">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">java类加载机制</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-07-13T00:00:00+08:00">
+                2017-07-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/java/" itemprop="url" rel="index">
+                    <span itemprop="name">java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>基于JVM的语言，如java,kotlin,groovy等语言，在各自编译器编译完成之后，都会编译为<code>.class</code>文件，用JVM加载。而class文件只有被确的加载到JVM正中才能运行和使用。虚拟机是如何在家这些文件呢？本文将详细讲解。</p>
+<h1 id="类的生命周期"><a href="#类的生命周期" class="headerlink" title="类的生命周期"></a>类的生命周期</h1><p>一个类从被加载到虚拟机到最后被卸载，生命周期包括：<code>加载</code>，<code>验证</code>，<code>准备</code>，<code>解析</code>，<code>初始化</code>，<code>使用</code>，卸载7个阶段。其中验证，准备，解析3个部分称为<code>`连接</code>阶段。</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/1583231-143bb3a388527936.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="类的生命周期"></p>
+<p>这7个阶段在实际JVM中并不是按照图中所示的顺序来<code>开始运行</code>的，里面存在时间上的交叉进行。但是其中加载，验证，准备，初始化，卸载5个结算的顺序是确定的。</p>
+<h3 id="加载"><a href="#加载" class="headerlink" title="加载"></a>加载</h3><p>这是类生命周期的第一个阶段，那么加载的是什么呢？加载的应该是<code>一个字节码文件的二进制字节流</code>。那么此二进制流如何得来呢？java虚拟机规范并没有强制要求，我们可以灵活运用这一特性实现很多的加载源：</p>
+<ul>
+<li>最常见的，从压缩包获取，比如jar，EAR，WAR等</li>
+<li>从网络中获取，比如早期嵌入在浏览器中的Applet程序</li>
+<li>在运行是生成字节码，动态代理技术。如著名的<code>GCLib</code>字节码类库，再如现在<code>Android</code>中常用的网络请求库<code>retrofit</code>中所使用的动态代理<code>Proxy.newProxyInstance()</code>中，最终会调用的<code>sun.misc.ProxyGenerator.generateProxyClass()</code>方法，该方法在运行时动态产生了一组字节码流（标识为<code>$Proxy</code>的代理类）。</li>
+<li>由其他文件生成，比如由JSP文件生成class类</li>
+<li>等等等等</li>
+</ul>
+<p>在此阶段，开发人员可以使用系统的类加载器进行加载，也可以使用自己定义的类加载器来自定义获取字节码流的方式（重写来加载器的<code>loadClass</code>方法）。</p>
+<p>加载字节码文件结束后，虚拟机将字节流存储在方法区中，同时在内存中（Hot Spot中实在方法区中）实例化一个<code>Class</code>对象，外部可以同过此实例访问该类对象。</p>
+<p>在此阶段运行中，验证阶段就已开始，交叉进行。只有通过通过了验证阶段，只有通过了验证阶段，字节流才会进入内存的方法区中进行存储。</p>
+<h3 id="验证"><a href="#验证" class="headerlink" title="验证"></a>验证</h3><p>验证阶段的主要任务是：确保字节码流中包含的信息符合当前版本虚拟机的要求，并不会有危害虚拟机自身安全的行为。</p>
+<p>如：将一个对象强转为一个未声明实现的类型，执行一个虚方法，执行一个并不存在的方法。在我们平时编码的经验中，虽然以上这些错误会在编译时报出，无法通过编译；但是，我们上面提到过，class文件是由多种方式得来，对于直接生成<code>.class</code>文件、无需编译的方式，验证这一阶段对于虚拟机的保护就显得尤其重要。</p>
+<p>简要的概述，虚拟机对类的验证阶段分为以下4个方面，这四个方面层层深入：</p>
+<h4 id="文件格式的验证"><a href="#文件格式的验证" class="headerlink" title="文件格式的验证"></a>文件格式的验证</h4><blockquote>
+<p>针对类文件（字节码流）的验证</p>
+</blockquote>
+<p>验证字节码流是否符合java虚拟机规范中规定的class文件格式，如：</p>
+<ul>
+<li>魔数是否为CAFEBABY</li>
+<li>当前虚拟机持否可以处理文件声明的主，次版本号</li>
+<li>常量池中是否有不被支持的常量类型</li>
+<li>检查指向常量的索引是否指向了不存在的常量</li>
+<li>CONSTANT_Utf8_info型的常量是否符合Utf8编码</li>
+<li>Class文件中的各个部分是否被删除（class文件是否完整）</li>
+<li>等等</li>
+</ul>
+<blockquote>
+<p>通过了验证阶段，字节流会进入内存的方法区中进行存储。以后的验证和其他操作都针对于内存方法区中的数据进行操作，而不针对字节码流。</p>
+</blockquote>
+<h4 id="元数据验证"><a href="#元数据验证" class="headerlink" title="元数据验证"></a>元数据验证</h4><blockquote>
+<p>针对数据类型的验证</p>
+</blockquote>
+<p>该阶段是进行语义分析验证，以保证其信息符合Java语言规范的要求，比如：</p>
+<ul>
+<li>检查这个类是否有父类（除了Object之外都应有父类）</li>
+<li>本类的父类是否继承了不允许被继承的类（被final修饰）</li>
+<li>如果本类不是抽象类，是否实现了父类中的全部虚方法或接口</li>
+<li>等等</li>
+</ul>
+<h4 id="字节码验证"><a href="#字节码验证" class="headerlink" title="字节码验证"></a>字节码验证</h4><blockquote>
+<p>针对方法体的验证</p>
+</blockquote>
+<p>此阶段通过数据流和控制流分析，检查程序的语义是合法的，符合逻辑的。保证程序逻辑的正确运行，检验的内容如：</p>
+<ul>
+<li>保证任意时刻操作数栈的数据类型与指令代码序列都能配合工作。（如：不能出现这样的状况：操作栈中放了一个int类型的数据，使用却按照long或者引用类型加载）</li>
+<li>保证跳转指令不会跳转到方法体以外的字节码指令上</li>
+<li>类型转换是有效的（如多态）</li>
+<li>等等<h4 id="符号引用的验证"><a href="#符号引用的验证" class="headerlink" title="符号引用的验证"></a>符号引用的验证</h4></li>
+</ul>
+<blockquote>
+<p>针对常量池匹配的验证</p>
+</blockquote>
+<p>此阶段检查是为了：确保在后续的解析阶段，虚拟机可以顺利的将符号引用转化为直接引用。（关于符号引用与直接引用的概念，祥见下文解析过程）见下图，讲解一下验证内容：</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/1583231-731c7ee40cbd2392.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/800" alt="常量池"></p>
+<ul>
+<li>符号引用中通过字符串的描述能够找对应的类（如：上图中常量池中有一个指向类型为class的常量<code>#4 = Class    #17    // java/lang/Object</code>,应该确保有一个类与之对应,此处为String类）</li>
+<li>符号引用中通过字符串的描述的能够找到相应的方法（如：上图中<code>#2 = Methodref          #3.#15    // VinctorTest.test:()V</code>描述的，需要在VinctorTest类中有一个test方法与之对应）</li>
+<li>符号引用中的用到的类，方法，字段的访问性（public  private等）确保可以被当前类访问到</li>
+<li>等等</li>
+</ul>
+<h4 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h4><blockquote>
+<p>针对类变量(static)</p>
+</blockquote>
+<p>经过验证阶段，虚拟机从文件，数据类型，方法逻辑，符号引用等各个方面对类进行了验证，已确保代码的正确性。接下来开始为代码的运行做准备，进入准备阶段。</p>
+<p>准备阶段是为正式<code>类变量</code>（注意，不是实例变量）分配内存并设置类变量初始值的阶段，注意，此初始值并不是我们java代码中所写的初始值（如 int a=123；），而是java虚拟机规范中规定的初始值，<br>java体系中各种类型的初始值如下：</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/1583231-803d7042c8dc56f9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/800" alt="各类型的初始值"></p>
+<p>如果一个变量声明为<code>static int a=123</code>，则在此阶段，声明a的值为0；</p>
+<p>注意：如果类变量被<code>final</code>修饰，如</p>
+<blockquote>
+<p>final  static int a=123;</p>
+</blockquote>
+<p>这种情况下，javac编译阶段，将为此变量生成<code>ConstantValue</code>属性，在此准备阶段直接将其赋值为123；</p>
+<h4 id="解析"><a href="#解析" class="headerlink" title="解析"></a>解析</h4><blockquote>
+<p>针对常量池</p>
+</blockquote>
+<p>解析阶段是将常量池中符号引用转化成直接引用的过程。主要针对常量池中的类或接口，字段，类方法，接口方法，方法类型，方法句柄，调用限定符</p>
+<ul>
+<li><code>符号引用</code>：见上文中class文件中常量池的图片，我们可以知道常量池中有描述类，方法，字段等常量，这些常量通过一组符号（比如UTF8字符串）描述所引用的目标。虽然在验证阶段已经对此进行了验证，但是这些毕竟只是一些字符串，并不能拿来直接为虚拟机使用，并不指向任何真实的内存地址。</li>
+<li><code>直接引用</code>：直接引用则是指向这些目标的指针，偏移量或者句柄。</li>
+</ul>
+<p>直接引用指向的目标必须真实存在于内存之中的。在代码运行过程中，会不断产生新对象，故而解析这一过程并不是一次就完成的，其发生的时机不固定。</p>
+<p>java虚拟机规范中规定了只有执行了以下字节码指令前才会将所用到的符号引用转化为直接引用：</p>
+<ul>
+<li><code>anewarray</code>  创建一个<code>引用类型</code>的数组</li>
+<li><code>checkcast</code> 检查对象是否是给定类型</li>
+<li><code>getfield</code>  <code>putfield</code>   从对象获取某一个字段  设置对象的字段</li>
+<li><code>getstatic</code>  <code>putstatic</code> 从类中获取某一静态变量 设置静态变量</li>
+<li><code>instanceof</code> 确定对象是否是给定类型</li>
+<li><code>invokedynamic</code> <code>invokeinterface</code> <code>invokestatic</code> <code>invokevirtual</code> 调用动态方法，接口方法，静态方法，虚方法</li>
+<li><code>invokespecial</code> 调用实例化方法，私有方法，父类中的方法</li>
+<li><code>ldc</code>  <code>idc_w</code>  把常量池中的项压入栈</li>
+<li><code>multianewarray</code>  创建多为<code>引用类型</code>性数组</li>
+<li><code>new</code> 实例化对象</li>
+</ul>
+<p>在解析过程中，如果需要解析类或接口的的字段，方法，则先查找该字段，方法所属的类或接口是否被解析，如果没有，则先解析类或接口，然后在查找当前的类或接口中是否有该字段或方法，如果没有，则递归向上到父类或父接口中寻找该字段或接口。</p>
+<h4 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h4><p>至此，程序终于开始执行我们开发人员写的代码了（等了好久）。此阶段是为类设置类变量的值和一些其他初始化操作的阶段（如执行<code>static{ }</code>静态代码块）。</p>
+<p>在类编译过充中，编译器为每一个方法生成了一个<code>&lt;clinit&gt;()</code>类初始化方法，初始化阶段也是此方法的执行阶段。</p>
+<blockquote>
+<p>注意<code>&lt;clinit&gt;()</code>并不是默认构造方法，前者是类的初始化方法，后者是实例的初始化方法。我们此文讨论的是类的生命周期，而不是实例的生命周期。</p>
+</blockquote>
+<p><code>&lt;clinit&gt;()</code>是如何生成的呢？其中又包含什么呢？</p>
+<p><code>&lt;clinit&gt;()</code>方法是在编译阶段，编译器收集整个类中的<code>类变量</code>的赋值以及<code>静态代码块</code>而形成的。顺序是按照赋值以及静态代码在源文件中出现的顺序生成的。同时，如果一个类有父类，则虚拟机会保证父类的初始化先于子类的初始化执行。</p>
+<h2 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h2><p>至此 一个类已经具备我们使用的条件了，我们可以对这个类进行实例化和其他操作了。</p>
+<blockquote>
+<p>github上的地址：<a href="https://github.com/Vinctor/DevelopBlog" target="_blank" rel="noopener">DevelopBlog</a></p>
+</blockquote>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/donate/wechat.jpg" alt="Vinctor（猿，国家十级保护动物） 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/donate/alipay.jpg" alt="Vinctor（猿，国家十级保护动物） 支付宝"/>
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/类加载/" rel="tag"># 类加载</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/07/12/java/normal/java_GC算法/" rel="next" title="java_GC垃圾回收算法">
+                <i class="fa fa-chevron-left"></i> java_GC垃圾回收算法
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/10/05/android/Gradle_note/" rel="prev" title="Gradle笔记（不定时更新）">
+                Gradle笔记（不定时更新） <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+<span class="jiathis_txt">分享到：</span>
+<a class="jiathis_button_fav">收藏夹</a>
+<a class="jiathis_button_copy">复制网址</a>
+<a class="jiathis_button_email">邮件</a>
+<a class="jiathis_button_weixin">微信</a>
+<a class="jiathis_button_qzone">QQ空间</a>
+<a class="jiathis_button_tqq">腾讯微博</a>
+<a class="jiathis_button_douban">豆瓣</a>
+<a class="jiathis_button_share">一键分享</a>
+
+<a href="http://www.jiathis.com/share?uid=2140465" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank">更多</a>
+<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+var jiathis_config={
+  data_track_clickback:true,
+  summary:"",
+  shortUrl:false,
+  hideMore:false
+}
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=2151738" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.jpg"
+                alt="Vinctor（猿，国家十级保护动物）" />
+            
+              <p class="site-author-name" itemprop="name">Vinctor（猿，国家十级保护动物）</p>
+              <p class="site-description motion-element" itemprop="description">Android Java 日常随笔</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">12</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">22</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/vinctor" target="_blank" title="GitHub">
+                    
+                      <i class="fa fa-fw fa-globe"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:xcht1209@gmail.com" target="_blank" title="E-Mail">
+                    
+                      <i class="fa fa-fw fa-globe"></i>E-Mail</a>
+                </span>
+              
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#类的生命周期"><span class="nav-number">1.</span> <span class="nav-text"><a href="#&#x7C7B;&#x7684;&#x751F;&#x547D;&#x5468;&#x671F;" class="headerlink" title="&#x7C7B;&#x7684;&#x751F;&#x547D;&#x5468;&#x671F;"></a>&#x7C7B;&#x7684;&#x751F;&#x547D;&#x5468;&#x671F;</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#加载"><span class="nav-number">1.0.1.</span> <span class="nav-text"><a href="#&#x52A0;&#x8F7D;" class="headerlink" title="&#x52A0;&#x8F7D;"></a>&#x52A0;&#x8F7D;</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#验证"><span class="nav-number">1.0.2.</span> <span class="nav-text"><a href="#&#x9A8C;&#x8BC1;" class="headerlink" title="&#x9A8C;&#x8BC1;"></a>&#x9A8C;&#x8BC1;</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#文件格式的验证"><span class="nav-number">1.0.2.1.</span> <span class="nav-text"><a href="#&#x6587;&#x4EF6;&#x683C;&#x5F0F;&#x7684;&#x9A8C;&#x8BC1;" class="headerlink" title="&#x6587;&#x4EF6;&#x683C;&#x5F0F;&#x7684;&#x9A8C;&#x8BC1;"></a>&#x6587;&#x4EF6;&#x683C;&#x5F0F;&#x7684;&#x9A8C;&#x8BC1;</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#元数据验证"><span class="nav-number">1.0.2.2.</span> <span class="nav-text"><a href="#&#x5143;&#x6570;&#x636E;&#x9A8C;&#x8BC1;" class="headerlink" title="&#x5143;&#x6570;&#x636E;&#x9A8C;&#x8BC1;"></a>&#x5143;&#x6570;&#x636E;&#x9A8C;&#x8BC1;</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#字节码验证"><span class="nav-number">1.0.2.3.</span> <span class="nav-text"><a href="#&#x5B57;&#x8282;&#x7801;&#x9A8C;&#x8BC1;" class="headerlink" title="&#x5B57;&#x8282;&#x7801;&#x9A8C;&#x8BC1;"></a>&#x5B57;&#x8282;&#x7801;&#x9A8C;&#x8BC1;</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#符号引用的验证"><span class="nav-number">1.0.2.4.</span> <span class="nav-text"><a href="#&#x7B26;&#x53F7;&#x5F15;&#x7528;&#x7684;&#x9A8C;&#x8BC1;" class="headerlink" title="&#x7B26;&#x53F7;&#x5F15;&#x7528;&#x7684;&#x9A8C;&#x8BC1;"></a>&#x7B26;&#x53F7;&#x5F15;&#x7528;&#x7684;&#x9A8C;&#x8BC1;</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#准备"><span class="nav-number">1.0.2.5.</span> <span class="nav-text"><a href="#&#x51C6;&#x5907;" class="headerlink" title="&#x51C6;&#x5907;"></a>&#x51C6;&#x5907;</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#解析"><span class="nav-number">1.0.2.6.</span> <span class="nav-text"><a href="#&#x89E3;&#x6790;" class="headerlink" title="&#x89E3;&#x6790;"></a>&#x89E3;&#x6790;</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#初始化"><span class="nav-number">1.0.2.7.</span> <span class="nav-text"><a href="#&#x521D;&#x59CB;&#x5316;" class="headerlink" title="&#x521D;&#x59CB;&#x5316;"></a>&#x521D;&#x59CB;&#x5316;</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用"><span class="nav-number">1.1.</span> <span class="nav-text"><a href="#&#x4F7F;&#x7528;" class="headerlink" title="&#x4F7F;&#x7528;"></a>&#x4F7F;&#x7528;</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vinctor（猿，国家十级保护动物）</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.3</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

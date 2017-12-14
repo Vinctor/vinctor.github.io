@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="多线程,并发,ReentrantLock," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="本文基于java version “1.8.0_77”  ReentrantLock（java.util.concurrent.locks）（译为：重入锁）是java 5.0之后新加入的并发机制。他的出现并不是替代之前的内置锁synchronized，而是在内置锁不适用时，可以提供更加灵活的加锁机制。 ReentrantLock使用:1234567891011121314Lock lock =">
+<meta name="keywords" content="多线程,并发,ReentrantLock">
+<meta property="og:type" content="article">
+<meta property="og:title" content="java多线程之⑥——重入锁ReentrantLock">
+<meta property="og:url" content="http://vinctor.cc/2017/12/06/java/concurrent/java多线程之⑥——重入锁ReentrantLock/index.html">
+<meta property="og:site_name" content="Vinctor&#39;s Home">
+<meta property="og:description" content="本文基于java version “1.8.0_77”  ReentrantLock（java.util.concurrent.locks）（译为：重入锁）是java 5.0之后新加入的并发机制。他的出现并不是替代之前的内置锁synchronized，而是在内置锁不适用时，可以提供更加灵活的加锁机制。 ReentrantLock使用:1234567891011121314Lock lock =">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/1583231-98c45b580455f88a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/800">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/1583231-50c35ffd0db54cda.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/800">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/1583231-0491f1d392f96d4d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/1583231-ddd6b83657d988ac.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/1583231-0bd62f457e6eefd9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/800">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/1583231-45029fff5d378f66.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/800">
+<meta property="og:updated_time" content="2017-12-14T07:21:01.413Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="java多线程之⑥——重入锁ReentrantLock">
+<meta name="twitter:description" content="本文基于java version “1.8.0_77”  ReentrantLock（java.util.concurrent.locks）（译为：重入锁）是java 5.0之后新加入的并发机制。他的出现并不是替代之前的内置锁synchronized，而是在内置锁不适用时，可以提供更加灵活的加锁机制。 ReentrantLock使用:1234567891011121314Lock lock =">
+<meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/1583231-98c45b580455f88a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/800">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://vinctor.cc/2017/12/06/java/concurrent/java多线程之⑥——重入锁ReentrantLock/"/>
+
+
+
+
+
+  <title>java多线程之⑥——重入锁ReentrantLock | Vinctor's Home</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Vinctor's Home</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">天道酬勤</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            目录
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-question-circle"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://vinctor.cc/2017/12/06/java/concurrent/java多线程之⑥——重入锁ReentrantLock/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Vinctor（猿，国家十级保护动物）">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Vinctor's Home">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">java多线程之⑥——重入锁ReentrantLock</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-12-06T00:00:00+08:00">
+                2017-12-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/java多线程/" itemprop="url" rel="index">
+                    <span itemprop="name">java多线程</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <blockquote>
+<p>本文基于java version “1.8.0_77”</p>
+</blockquote>
+<p>ReentrantLock（java.util.concurrent.locks）（译为：重入锁）是java 5.0之后新加入的并发机制。他的出现并不是替代之前的内置锁<a href="http://www.jianshu.com/p/81e6f64c0fec" target="_blank" rel="noopener">synchronized</a>，而是在内置锁不适用时，可以提供更加灵活的加锁机制。</p>
+<h1 id="ReentrantLock使用"><a href="#ReentrantLock使用" class="headerlink" title="ReentrantLock使用:"></a>ReentrantLock使用:</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">Lock lock = new ReentrantLock();  //可选参数：boolean 是否公平</span><br><span class="line"></span><br><span class="line">// lockInterruptibly()，可中断的获取锁</span><br><span class="line">// tryLock()//如果已经被lock，则立即返回false不会等待，达到忽略操作的效果   </span><br><span class="line">// tryLock(long timeout, TimeUnit unit) //如果已经被lock，尝试等待，看是否可以获得锁，如果超市仍然无法获得锁则返回false继续执行  </span><br><span class="line"></span><br><span class="line">lock.lock(); / /如果被其它资源锁定，会在此等待锁释放，达到暂停的效果  </span><br><span class="line">try &#123;   </span><br><span class="line">    //do something</span><br><span class="line">&#125;  </span><br><span class="line">finally &#123;  </span><br><span class="line">    lock.unlock();   // 不要漏掉</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>ReentrantLock的使用很简单，首尾加解锁，中间是执行同步代码。ReentrantLock同样是一种互斥，可重入锁，同时它支持了获取锁的时候的公平性与否。</p>
+<ul>
+<li>互斥：表示每次只有一个线程可以获取锁执行同步代码；</li>
+<li>可重入：表示同一个线程可以对同一个锁的重复获取，比如在循环中加解锁。</li>
+<li>公平性：等待中的线程是否按照时间顺序获取锁。</li>
+</ul>
+<h3 id="ReentrantLock与synchronized"><a href="#ReentrantLock与synchronized" class="headerlink" title="ReentrantLock与synchronized"></a>ReentrantLock与synchronized</h3><p>ReentrantLock与synchronized相同，都是可重入锁，互斥锁。在提供了与synchronized相同的锁功能的同时，ReentrantLock还提供了如下功能：</p>
+<ul>
+<li>锁等待可以设置超时时间 tryLock(long, TimeUnit)，如果取得成功则继续处理，取得不成功，可以等下次运行的时候处理，所以不容易产生死锁。而synchronized则一旦进入锁请求要么成功，要么一直阻塞，所以更容易产生死锁。此方法仅在调用时锁为空闲状态才获取该锁。如果锁可用，则获取锁，并立即返回值true。如果锁不可用，则此方法将立即返回值false。</li>
+<li>可以设置可中断的锁等待 lockInterruptibly()</li>
+<li>可以设置锁等待的公平性  ReentrantLock(boolean fair)</li>
+</ul>
+<p>需要注意的地方：lock 必须在 finally 块中释放。否则，如果受保护的代码将抛出异常，锁就有可能永远得不到释放！</p>
+<h1 id="Lock"><a href="#Lock" class="headerlink" title="Lock"></a>Lock</h1><p>ReentrantLock实现了Lock接口，Lock接口定义了如下方法：</p>
+<ul>
+<li><code>void lock()</code>  获取锁，可等待</li>
+<li><code>void lockInterruptibly() throws InterruptedException</code>可中断的获取锁</li>
+<li><code>boolean tryLock();</code>如果已经被lock，则立即返回false不会等待，达到忽略操作的效果  </li>
+<li><code>boolean tryLock(long, TimeUnit) throws InterruptedException;</code>如果已经被lock，尝试等待，看是否可以获得锁，如果超时仍然无法获得锁则返回false继续执行  </li>
+<li><code>void unlock();</code>解锁</li>
+<li><code>Condition newCondition()</code> 译为：“条件”，创建一个新的Condition，绑定到当前Lock上。Lock 替代了 synchronized 方法和语句的使用，而Condition 替代了 Object 监视器方法的使用。在Condition中，await()相当于wait()，signal()相当于notify()，signalAll()相当于notifyAll()。</li>
+</ul>
+<h1 id="Fuck源码"><a href="#Fuck源码" class="headerlink" title="Fuck源码"></a>Fuck源码</h1><p>我们从ReentrantLock调用的角度来看一下源码：</p>
+<p>看一下ReentrantLock的类结构</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/1583231-98c45b580455f88a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/800" alt="image.png"></p>
+<p>我们翻看ReentrantLock的源码可以看到，ReentrantLock看起来更像是一个代理类，他的所有对外公布的方法全部都是有两个内部类来实现的：FairSync（公平锁）和NonfairSync（不公平锁），对于是否为公平锁，使用了策略模式，针对公平与否，使用不同的获取锁的策略。而这两个类继承了同一个类：Sync。而Sync类继承了AbstractQueuedSynchronizer类。</p>
+<p>我们在上篇的<a href="http://www.jianshu.com/p/4a6d4ed88b1d" target="_blank" rel="noopener">AQS源码分析</a>中讲到，如果线程获取锁失败，则进入等待队列（FIFO），进入队列是按照时间顺序的。</p>
+<p>AQS中有两个重要部分：</p>
+<ol>
+<li>等待队列：是为了管理等待的线程；</li>
+<li><code>state</code>系方法如下图，由子类调用，用来控制是否允许获取锁。例如：ReentrantLock中用它来表示所有线程呢个已经重复获取该锁的次数，Semaphore用它来表示剩余的许可数量，FutureTask用它来表示任务的状态（未开始，正在运行，已结束，已取消等）。这样子类不用关心等待队列如何工作，只需要控制state就可以实现一个lock。</li>
+</ol>
+<p><img src="http://upload-images.jianshu.io/upload_images/1583231-50c35ffd0db54cda.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/800" alt="image.png"></p>
+<h3 id="非公平锁-amp-重入"><a href="#非公平锁-amp-重入" class="headerlink" title="非公平锁&amp;重入"></a>非公平锁&amp;重入</h3><p>NonfairSync：tryAcquire(int acquires)</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/1583231-0491f1d392f96d4d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
+<p>看到非公平锁的tryAcquire方法调用了nonfairTryAcquire方法，我们继续往下看：</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/1583231-ddd6b83657d988ac.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
+<p>假设一个线程A尝试获取锁，首先判断当前state的值，</p>
+<ul>
+<li>如果为0，则表示当前并没有线程获取当前锁，那就尝试将state设置为1，如果失败，则表示已经有线程获取了锁，线程A获取失败，返回false；如果成功，表示当前线程A获取了锁，并保存线程A，设置标记一下当前独占模式的线程。</li>
+<li>如果不为0，表示已经有线程获取过锁。这时有两种可能：有可能是线程A已经获取过锁，此时是线程A的重入；也有可能是其他线程（反正不是线程A）获取锁。这是需要先判断一下是否是重入（<code>if (current == getExclusiveOwnerThread())</code>），如果是重入情况下，则继续在state的值的基础上+1，这时重入，再次获取了锁。</li>
+</ul>
+<h3 id="公平锁-amp-重入"><a href="#公平锁-amp-重入" class="headerlink" title="公平锁&amp;重入"></a>公平锁&amp;重入</h3><p>首先，看公平锁的lock源码：<br>FairSync:tryAcquire()</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/1583231-0bd62f457e6eefd9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/800" alt="image.png"></p>
+<p>可以看到，与上面讲到的非公平锁极其类似，唯一不同的是，在首次获取锁的时候，进行了<code>hasQueuedPredecessors()</code>判断，判断等待队列中是否还有比当前线程更早的, 如果为空，或者当前线程线程是等待队列的第一个时才占有锁。我们看一下它的源码：</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/1583231-45029fff5d378f66.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/800" alt="image.png"></p>
+<p>这是对同步队列中当前节点是否有前驱节点的判断，如果该方法返回true，则表示有线程比当前线程更早地请求获取锁，因此需要等待前驱线程获取并释放锁之后才能继续获取锁。<br>这里判断了<code>(s = h.next) == null</code>是为了，防止此时有另外的线程在同时抢占锁，并获取锁，故如果为null，则进入等待队列。</p>
+<h2 id="End"><a href="#End" class="headerlink" title="End"></a>End</h2>
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/donate/wechat.jpg" alt="Vinctor（猿，国家十级保护动物） 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/donate/alipay.jpg" alt="Vinctor（猿，国家十级保护动物） 支付宝"/>
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/多线程/" rel="tag"># 多线程</a>
+          
+            <a href="/tags/并发/" rel="tag"># 并发</a>
+          
+            <a href="/tags/ReentrantLock/" rel="tag"># ReentrantLock</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/12/05/java/concurrent/java多线程之⑤——AbstractQueuedSynchronizer(AQS)源码分析/" rel="next" title="java多线程之⑤——AbstractQueuedSynchronizer(AQS)源码分析">
+                <i class="fa fa-chevron-left"></i> java多线程之⑤——AbstractQueuedSynchronizer(AQS)源码分析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/12/07/java/concurrent/java多线程之⑦——读写锁ReentrantReadWriteLock源码分析/" rel="prev" title="java多线程之⑦——读写锁ReentrantReadWriteLock源码分析">
+                java多线程之⑦——读写锁ReentrantReadWriteLock源码分析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+<span class="jiathis_txt">分享到：</span>
+<a class="jiathis_button_fav">收藏夹</a>
+<a class="jiathis_button_copy">复制网址</a>
+<a class="jiathis_button_email">邮件</a>
+<a class="jiathis_button_weixin">微信</a>
+<a class="jiathis_button_qzone">QQ空间</a>
+<a class="jiathis_button_tqq">腾讯微博</a>
+<a class="jiathis_button_douban">豆瓣</a>
+<a class="jiathis_button_share">一键分享</a>
+
+<a href="http://www.jiathis.com/share?uid=2140465" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank">更多</a>
+<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+var jiathis_config={
+  data_track_clickback:true,
+  summary:"",
+  shortUrl:false,
+  hideMore:false
+}
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=2151738" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.jpg"
+                alt="Vinctor（猿，国家十级保护动物）" />
+            
+              <p class="site-author-name" itemprop="name">Vinctor（猿，国家十级保护动物）</p>
+              <p class="site-description motion-element" itemprop="description">Android Java 日常随笔</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">12</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">22</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/vinctor" target="_blank" title="GitHub">
+                    
+                      <i class="fa fa-fw fa-globe"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:xcht1209@gmail.com" target="_blank" title="E-Mail">
+                    
+                      <i class="fa fa-fw fa-globe"></i>E-Mail</a>
+                </span>
+              
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#ReentrantLock使用"><span class="nav-number">1.</span> <span class="nav-text"><a href="#ReentrantLock&#x4F7F;&#x7528;" class="headerlink" title="ReentrantLock&#x4F7F;&#x7528;:"></a>ReentrantLock&#x4F7F;&#x7528;:</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ReentrantLock与synchronized"><span class="nav-number">1.0.1.</span> <span class="nav-text"><a href="#ReentrantLock&#x4E0E;synchronized" class="headerlink" title="ReentrantLock&#x4E0E;synchronized"></a>ReentrantLock&#x4E0E;synchronized</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Lock"><span class="nav-number">2.</span> <span class="nav-text"><a href="#Lock" class="headerlink" title="Lock"></a>Lock</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Fuck源码"><span class="nav-number">3.</span> <span class="nav-text"><a href="#Fuck&#x6E90;&#x7801;" class="headerlink" title="Fuck&#x6E90;&#x7801;"></a>Fuck&#x6E90;&#x7801;</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#非公平锁-amp-重入"><span class="nav-number">3.0.1.</span> <span class="nav-text"><a href="#&#x975E;&#x516C;&#x5E73;&#x9501;-amp-&#x91CD;&#x5165;" class="headerlink" title="&#x975E;&#x516C;&#x5E73;&#x9501;&amp;&#x91CD;&#x5165;"></a>&#x975E;&#x516C;&#x5E73;&#x9501;&amp;&#x91CD;&#x5165;</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#公平锁-amp-重入"><span class="nav-number">3.0.2.</span> <span class="nav-text"><a href="#&#x516C;&#x5E73;&#x9501;-amp-&#x91CD;&#x5165;" class="headerlink" title="&#x516C;&#x5E73;&#x9501;&amp;&#x91CD;&#x5165;"></a>&#x516C;&#x5E73;&#x9501;&amp;&#x91CD;&#x5165;</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#End"><span class="nav-number">3.1.</span> <span class="nav-text"><a href="#End" class="headerlink" title="End"></a>End</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vinctor（猿，国家十级保护动物）</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.3</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
