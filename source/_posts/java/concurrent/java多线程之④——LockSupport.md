@@ -1,6 +1,13 @@
 ----
 title: java多线程之④——LockSupport
 date: 2017-12-04
+categories:
+  - java
+tags:
+  - 多线程
+  - 并发
+  - LockSupport
+  
 ----
 
 >本文基于java version "1.8.0_77"

@@ -1,6 +1,13 @@
 ---
 title: java_GC垃圾回收算法
 date: 2017-07-12
+categories:
+  - java
+tags:
+  - GC
+  - 垃圾回收
+  - JVM
+  
 ---
 
 与C语言不同，Java内存（堆内存）的回收由JVM垃圾收集器自动完成，不需要程序开发者手动释放内存。

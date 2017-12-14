@@ -1,6 +1,13 @@
 ----
 title: java多线程之②——Synchronized
 date: 2017-12-02
+categories:
+  - java多线程
+tags:
+  - 多线程
+  - 并发
+  - Synchronized
+  
 ----
 
 在java多线程并发编程中,`Synchronized`一直占有很重要的角色。`Synchronized`通过获取锁来实现同步。先来看一下,它的使用方法:

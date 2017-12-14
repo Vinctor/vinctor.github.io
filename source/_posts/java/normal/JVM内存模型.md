@@ -1,7 +1,13 @@
 
----
 title: JVM内存模型
 date: 2017-07-10
+categories:
+  - java
+tags:
+  - JVM
+  - 运行数据区域
+  - JVM内存模型
+  
 ---
 
 # 概览

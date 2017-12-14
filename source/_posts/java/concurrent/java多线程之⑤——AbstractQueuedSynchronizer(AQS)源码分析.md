@@ -1,5 +1,13 @@
 title: java多线程之⑤——AbstractQueuedSynchronizer(AQS)源码分析
 date: 2017-12-05
+categories:
+  - java多线程
+tags:
+  - 多线程
+  - 并发
+  - AbstractQueuedSynchronizer
+  - AQS
+  
 ---
 
 >本文基于java version "1.8.0_77"

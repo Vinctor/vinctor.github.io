@@ -1,6 +1,10 @@
-----
 title: java类加载机制
 date: 2017-07-13
+categories:
+  - java
+tags:
+  - 类加载
+  
 ----
 
 基于JVM的语言，如java,kotlin,groovy等语言，在各自编译器编译完成之后，都会编译为```.class```文件，用JVM加载。而class文件只有被确的加载到JVM正中才能运行和使用。虚拟机是如何在家这些文件呢？本文将详细讲解。

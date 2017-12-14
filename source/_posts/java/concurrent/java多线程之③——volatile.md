@@ -1,6 +1,13 @@
 ----
 title: java多线程之③——volatile
 date: 2017-12-03
+categories:
+  - java多线程
+tags:
+  - 多线程
+  - 并发
+  - volatile
+  
 ----
 
 在多线程编程中，Synchronized 和 volatile 都扮演者重要的角色，前面的[文章](http://www.jianshu.com/p/81e6f64c0fec)我们已经了解了java内置锁Synchronized ，它保证了并发过程中的可见性与原子性，避免了共享数据的错误。

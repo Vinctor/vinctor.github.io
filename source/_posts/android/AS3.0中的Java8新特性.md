@@ -1,5 +1,13 @@
 title: AS3.0中的Java8新特性
 date: 2017-10-26
+tags:
+  - android
+  - android studio
+  - java8
+  - lambda
+categories:
+  - android
+	
 
 ---
 

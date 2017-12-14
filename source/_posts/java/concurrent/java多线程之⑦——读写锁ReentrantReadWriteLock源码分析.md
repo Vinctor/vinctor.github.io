@@ -1,5 +1,12 @@
 title: java多线程之⑦——读写锁ReentrantReadWriteLock源码分析
 date: 2017-12-07
+categories:
+  - java多线程
+tags:
+  - 多线程
+  - 并发
+  - ReentrantReadWriteLock
+  
 ---
 >本文基于java version "1.8.0_77"
 

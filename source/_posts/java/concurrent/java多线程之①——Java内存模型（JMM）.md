@@ -1,5 +1,13 @@
 title: java多线程之①——Java内存模型（JMM）
 date: 2017-12-01
+categories:
+  - java多线程
+tags:
+  - 多线程
+  - 并发
+  - JMM
+  - java内存模型
+
 ----
 
 在讲解之前，先区别两个概念：java内存模型与JVM内存模型。

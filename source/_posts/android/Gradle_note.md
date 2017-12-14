@@ -1,5 +1,10 @@
 title: Gradle笔记（不定时更新）
 date: 2017-10-05
+tags:
+  - android
+  - gradle
+categories:
+  - android
 
 ---
 

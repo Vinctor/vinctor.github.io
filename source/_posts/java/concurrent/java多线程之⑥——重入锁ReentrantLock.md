@@ -1,5 +1,12 @@
 title: java多线程之⑥——重入锁ReentrantLock
 date: 2017-12-06
+categories:
+  - java多线程
+tags:
+  - 多线程
+  - 并发
+  - ReentrantLock
+  
 ---
 >本文基于java version "1.8.0_77"
 
